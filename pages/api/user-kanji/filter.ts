@@ -19,24 +19,35 @@ export default async (req: any, res: any) => {
    try {
         const client = await clientPromise;
         const db = client.db("kanji-connect");
-        const match: any = { user: req.body.user }
+        const { body } = req;
+        const match: any = { user: body.user }
 
-        if (req.body.hasOwnProperty('kanjiAsCharacter')) {
-            const kanji = await db.collection('kanjis').findOne({ kanji: req.body.kanjiAsCharacter })
+        if (body.hasOwnProperty('kanjiAsCharacter')) {
+            const kanji = await db.collection('kanjis').findOne({ kanji: body.kanjiAsCharacter })
             match.kanji = kanji?._id;
         } else {
-            if (req.body.hasOwnProperty('difficulty')) {
-                match.difficulty = req.body.difficulty; 
+            if (body.hasOwnProperty('difficulty')) {
+                match.difficulty = body.difficulty; 
             }
-            if (req.body.hasOwnProperty('lesson')) {
+            if (body.hasOwnProperty('lesson')) {
                 const expressions = await db.collection('expressions')
-                    .find({ lesson: req.body.lesson }).toArray();
+                    .find({ lesson: body.lesson }).toArray();
                 match.expressions = { $in: expressions.map(e => e._id )}
             }
-            if (req.body.hasOwnProperty('jlpt')) {
+            if (body.hasOwnProperty('jlpt') && body.jlpt > 0) {
                 const kanjis = await db.collection('kanjis')
-                    .find({ jlpt: req.body.jlpt }).toArray();
+                    .find({ jlpt: body.jlpt }).toArray();
                 match.kanji = { $in: kanjis.map(e => e._id )}
+            }
+            if (body.hasOwnProperty('tags') && body.tags.length !== 0) {
+                const expressions = await db.collection('expressions')
+                    .find({ tags: {$all: body.tags.map((id: string) => new ObjectId(id)) }}).toArray();
+                match.expressions = { $in: expressions.map(e => e._id )}
+            }
+            if (body.hasOwnProperty('source')) {
+                const expressions = await db.collection('expressions')
+                    .find({ exampleSentences: { $elemMatch: { source: body.source }}}).toArray();
+                match.expressions = { $in: expressions.map(e => e._id )}
             }
         }
 
