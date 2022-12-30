@@ -15,20 +15,24 @@ export default async (req: any, res: any) => {
         const { body } = req;
         const match: any = { user: body.user }
 
-        if (body.hasOwnProperty('transitivity')) {
-            match.transitivity = body.transitivity;
-        }
-        if (body.hasOwnProperty('jlpt')) {
-            match.jlpt = body.jlpt;
-        }
-        if (body.hasOwnProperty('lesson') && body.lesson !== null && body.lesson.length !== 0) {
-            match.lesson = body.lesson;
-        }
-        if (body.hasOwnProperty('tags') && body.tags.length !== 0) {
-            match.tags = { $all: body.tags.map((id: string) => new ObjectId(id)) };
-        }
-        if (body.hasOwnProperty('source')) {
-            match.exampleSentences = { $elemMatch: { source: body.source }};
+        if (body.hasOwnProperty('searchList')) {
+            match.word = { $in: body.searchList }
+        } else {
+            if (body.hasOwnProperty('transitivity')) {
+                match.transitivity = body.transitivity;
+            }
+            if (body.hasOwnProperty('jlpt')) {
+                match.jlpt = body.jlpt;
+            }
+            if (body.hasOwnProperty('lesson') && body.lesson !== null && body.lesson.length !== 0) {
+                match.lesson = body.lesson;
+            }
+            if (body.hasOwnProperty('tags') && body.tags.length !== 0) {
+                match.tags = { $all: body.tags.map((id: string) => new ObjectId(id)) };
+            }
+            if (body.hasOwnProperty('source')) {
+                match.exampleSentences = { $elemMatch: { source: body.source }};
+            }
         }
         
         const expressions = await db

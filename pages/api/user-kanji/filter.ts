@@ -22,9 +22,10 @@ export default async (req: any, res: any) => {
         const { body } = req;
         const match: any = { user: body.user }
 
-        if (body.hasOwnProperty('kanjiAsCharacter')) {
-            const kanji = await db.collection('kanjis').findOne({ kanji: body.kanjiAsCharacter })
-            match.kanji = kanji?._id;
+        if (body.hasOwnProperty('searchList')) {
+            const kanji = await db.collection('kanjis')
+                .find({ kanji: { $in: body.searchList }}).toArray()
+            match.kanji = { $in: kanji.map(e => e._id) }
         } else {
             if (body.hasOwnProperty('difficulty')) {
                 match.difficulty = body.difficulty; 
