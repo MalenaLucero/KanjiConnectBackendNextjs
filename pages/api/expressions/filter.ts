@@ -38,11 +38,25 @@ export default async (req: any, res: any) => {
         const expressions = await db
                 .collection("expressions")
                 .aggregate([
-                    { $match: match }
+                    { $match: match }, 
                 ])
                 .toArray()
         
-        res.json(expressions)
+        const lessonSources = await db
+                .collection("lessonsources")
+                .find({ user: body.user })
+                .toArray();
+        
+        const expressionsWithSources = expressions.map(expression => {
+            if (expression.exampleSentences.length > 0) {
+                const lessonSource = lessonSources.find(lessonSource => lessonSource.source.toString() === expression.exampleSentences[0].source.toString())
+                expression.exampleSentences[0].source = lessonSource?.name;
+                return expression;
+            }
+            return expression;
+        }) 
+        
+        res.json(expressionsWithSources)
     } catch (e) {
         console.error(e);
     }
