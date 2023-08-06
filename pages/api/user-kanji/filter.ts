@@ -70,10 +70,26 @@ export default async (req: any, res: any) => {
                     }}
                 ])
                 .toArray()
+
+        const lessonSources = await db
+            .collection("lessonsources")
+            .find({ user: body.user })
+            .toArray();
         
-        res.json(userKanjis.map(kanji => {
-            return {...kanji, kanji: kanji.kanji[0]}
-        }))
+        const populatedUserKanji = userKanjis.map(kanji => {
+            const expressions = kanji.expressions.map((expression: any) => {
+                if (expression.exampleSentences.length > 0) {
+                    const lessonSource = lessonSources.find(lessonSource => lessonSource.source.toString() === expression.exampleSentences[0].source.toString())
+                    expression.exampleSentences[0].source = lessonSource?.name;
+                    return expression;
+                } else {
+                    return expression;
+                }
+            })
+            return {...kanji, kanji: kanji.kanji[0], expressions: expressions}
+        })
+        
+        res.json(populatedUserKanji)
     } catch (e) {
         console.error(e);
     }
