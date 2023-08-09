@@ -39,6 +39,12 @@ export default async (req: any, res: any) => {
                 .collection("expressions")
                 .aggregate([
                     { $match: match }, 
+                    { $lookup: {
+                        from: 'tags',
+                        localField: 'tags',
+                        foreignField: '_id',
+                        as: 'populatedTags' 
+                    }}
                 ])
                 .toArray()
         
