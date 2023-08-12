@@ -28,7 +28,7 @@ export default async (req: any, res: any) => {
             match.kanji = { $in: kanji.map(e => e._id) }
         } else {
             if (body.hasOwnProperty('difficulty')) {
-                match.difficulty = body.difficulty; 
+                match.difficulty = { $in: body.difficulty }; 
             }
             if (body.hasOwnProperty('lesson')) {
                 const expressions = await db.collection('expressions')
@@ -67,7 +67,8 @@ export default async (req: any, res: any) => {
                         localField: 'expressions',
                         foreignField: '_id',
                         as: 'expressions'
-                    }}
+                    }},
+                    { $sort : { difficulty : -1 } }
                 ])
                 .toArray()
 

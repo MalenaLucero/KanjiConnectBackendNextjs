@@ -24,6 +24,9 @@ export default async (req: any, res: any) => {
             if (body.hasOwnProperty('jlpt')) {
                 match.jlpt = body.jlpt;
             }
+            if (body.hasOwnProperty('difficulty')) {
+                match.difficulty = { $in: body.difficulty };
+            }
             if (body.hasOwnProperty('lesson') && body.lesson !== null && body.lesson.length !== 0) {
                 match.lesson = body.lesson;
             }
@@ -44,7 +47,8 @@ export default async (req: any, res: any) => {
                         localField: 'tags',
                         foreignField: '_id',
                         as: 'populatedTags' 
-                    }}
+                    }},
+                    { $sort : { difficulty : -1 } }
                 ])
                 .toArray()
         
