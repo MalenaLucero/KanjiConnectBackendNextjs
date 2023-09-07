@@ -1,11 +1,9 @@
 import clientPromise from "../../../../../lib/mongodb";
 
-//$in selects the documents where the value of a field EQUALS ANY VALUE IN A SPECIFIED ARRAY
-//{ field: { $in: [<value1>, <value2>...]}}
+//$elemMatch matches documents that contain an ARRAY FIELD with AT LEAST ONE ELEMENT that matches the criteria
+// { field: { $elemMatch: [<query1>, <query2>...]}}
 
-//returns expressions with tag id '61605ed19e01832a809af752'
-//the tags property is an array of ids
-//$in checks if the expression has the specified id
+//returns all documents with the specified meaning
 
 export default async (req: any, res: any) => {
 
@@ -15,7 +13,7 @@ export default async (req: any, res: any) => {
 
         const lessons = await db
             .collection("expressions")
-            .find({ englishMeaning: { $in: ["headlong rush, rushing recklessly"] }})
+            .find({ englishMeaning: { $elemMatch: { $in: ["headlong rush, rushing recklessly"]}}})
             .toArray()
 
         res.json(lessons);
