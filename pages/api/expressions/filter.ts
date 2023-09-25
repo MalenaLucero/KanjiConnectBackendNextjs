@@ -18,6 +18,9 @@ export default async (req: any, res: any) => {
         if (body.hasOwnProperty('searchList')) {
             match.word = { $in: body.searchList }
         } else {
+            if (body.hasOwnProperty('reading')) {
+                match.reading = body.reading;
+            }
             if (body.hasOwnProperty('transitivity')) {
                 match.transitivity = body.transitivity;
             }
@@ -37,6 +40,7 @@ export default async (req: any, res: any) => {
                 match.exampleSentences = { $elemMatch: { source: body.source }};
             }
         }
+        console.log(match)
         
         const expressions = await db
                 .collection("expressions")
