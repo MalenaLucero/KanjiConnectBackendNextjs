@@ -40,7 +40,6 @@ export default async (req: any, res: any) => {
                 match.exampleSentences = { $elemMatch: { source: body.source }};
             }
         }
-        console.log(match)
         
         const expressions = await db
                 .collection("expressions")
@@ -51,6 +50,12 @@ export default async (req: any, res: any) => {
                         localField: 'tags',
                         foreignField: '_id',
                         as: 'populatedTags' 
+                    }},
+                    { $lookup: {
+                        from: 'kanjis',
+                        localField: 'kanjis',
+                        foreignField: '_id',
+                        as: 'populatedKanjis' 
                     }},
                     { $sort : { difficulty : -1 } }
                 ])
