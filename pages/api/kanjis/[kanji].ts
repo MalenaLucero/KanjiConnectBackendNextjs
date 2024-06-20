@@ -35,21 +35,41 @@ const fn = async (req: any, res: any) => {
             .toArray();
 
         if (kanji.length > 0) {
-            const lookalikeGroupMembers = kanji[0].lookalikeGroups.map((group: any) => group.members);
-            const onyomiGroupMembers = kanji[0].onyomiGroups.map((group: any) => group.members);
-            const kunyomiGroupMembers = kanji[0].kunyomiGroups.map((group: any) => group.members);
-            const associatedKanji = Array.from(new Set(lookalikeGroupMembers.concat(onyomiGroupMembers, kunyomiGroupMembers).flat()))
-                .filter(member => member !== req.query.kanji);
+            const mainKanjiDetails = kanji[0];
 
-            const associatedKanjiDetails = await db
+            const kunyomiReadingsSearch = await db
+                .collection("kanjis")
+                .find({ kun_readings: { $elemMatch: { $in: mainKanjiDetails.kun_readings } } })
+                .toArray();
+            const kunyomiGeneralSearch = kunyomiReadingsSearch.filter(kanji => kanji.kanji !== mainKanjiDetails.kanji);
+            const kunyomiGeneralSearchMembers = kunyomiGeneralSearch.length > 0 ? kunyomiGeneralSearch.map(kanji => kanji.kanji) : [];
+
+            const lookalikeGroupMembers = mainKanjiDetails.lookalikeGroups.map((group: any) => group.members);
+            const onyomiGroupMembers = mainKanjiDetails.onyomiGroups.map((group: any) => group.members);
+            const kunyomiGroupMembers = mainKanjiDetails.kunyomiGroups.map((group: any) => group.members)
+                .filter((kanji: any) => kanji !== mainKanjiDetails.kanji);
+
+            const associatedKanji = Array
+                .from(new Set(lookalikeGroupMembers
+                    .concat(onyomiGroupMembers, kunyomiGroupMembers, kunyomiGeneralSearchMembers).flat()))
+                .filter(member => member !== req.query.kanji);
+            const associatedKanjiWithKanjiDetails = kunyomiGeneralSearchMembers;
+            const associatedKanjiWithoutKanjiDetails = associatedKanji
+                .filter(kanji => !associatedKanjiWithKanjiDetails.includes(kanji));
+
+            const availableKanjiDetails = kunyomiGeneralSearch;
+            const missingKanjiDetails = await db
                 .collection("kanjis")
                 .find({
-                    kanji: { $in: associatedKanji }
+                    kanji: { $in: associatedKanjiWithoutKanjiDetails }
                 })
-                .toArray()
+                .toArray();
+            const associatedKanjiDetails = availableKanjiDetails.concat(missingKanjiDetails);
 
-            kanji[0].associatedKanjiDetails = associatedKanjiDetails
-            res.json(kanji[0]);
+            mainKanjiDetails.otherSameKunyomiKanji = kunyomiGeneralSearchMembers;
+            mainKanjiDetails.associatedKanjiDetails = associatedKanjiDetails;
+
+            res.json(mainKanjiDetails);
         } else {
             res.json('Kanji not found');
         }
