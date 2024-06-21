@@ -21,12 +21,15 @@ export default async (req: any, res: any) => {
         const db = client.db("kanji-connect");
         const { body } = req;
         const match: any = { user: body.user }
+        let isSearchList = false;
 
         if (body.hasOwnProperty('searchList')) {
+            isSearchList = true;
             const kanji = await db.collection('kanjis')
                 .find({ kanji: { $in: body.searchList }}).toArray()
             match.kanji = { $in: kanji.map(e => e._id) }
         } else {
+            isSearchList = false;
             if (body.hasOwnProperty('difficulty')) {
                 match.difficulty = { $in: body.difficulty }; 
             }
@@ -77,7 +80,7 @@ export default async (req: any, res: any) => {
             .find({ user: body.user })
             .toArray();
         
-        const populatedUserKanji = userKanjis.map(kanji => {
+        const populatedUserKanji: any = userKanjis.map(kanji => {
             const expressions = kanji.expressions.map((expression: any) => {
                 if (expression.exampleSentences.length > 0) {
                     const lessonSource = lessonSources.find(lessonSource => lessonSource.source.toString() === expression.exampleSentences[0].source.toString())
@@ -89,8 +92,27 @@ export default async (req: any, res: any) => {
             })
             return {...kanji, kanji: kanji.kanji[0], expressions: expressions}
         })
-        
-        res.json(populatedUserKanji)
+
+        if (isSearchList) {
+            const userKanji = populatedUserKanji.map((populatedKanji: any) => populatedKanji.kanji.kanji);
+            const missingKanji = body.searchList.filter((kanji: string) => !userKanji.includes(kanji));
+            if (missingKanji.length > 0) {
+                const kanji = await db.collection('kanjis')
+                    .find({ kanji: { $in: missingKanji }})
+                    .toArray()
+                const format = kanji.map(kanji => {
+                    return {
+                        kanji: kanji
+                    }
+                })
+                const mergedKanjis = populatedUserKanji.concat(format);
+                res.json(mergedKanjis);
+            } else {
+                res.json(populatedUserKanji);
+            }
+        } else {
+            res.json(populatedUserKanji);
+        }
     } catch (e) {
         console.error(e);
     }
