@@ -7,7 +7,7 @@ const fn = async (req: any, res: any) => {
         origin: '*',
         optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
     });
-    
+
     try {
         const client = await clientPromise;
         const db = client.db("kanji-connect");
@@ -44,17 +44,20 @@ const fn = async (req: any, res: any) => {
         if (kanji.length > 0) {
             const mainKanjiDetails = kanji[0];
 
+            const onyomiGroupMembers = mainKanjiDetails.onyomiGroups.map((group: any) => group.members);
+            const lookalikeGroupMembers = mainKanjiDetails.lookalikeGroups.map((group: any) => group.members);
+            const kunyomiGroupMembers = mainKanjiDetails.kunyomiGroups.map((group: any) => group.members)
+                .filter((kanji: any) => kanji !== mainKanjiDetails.kanji);
+
             const kunyomiReadingsSearch = await db
                 .collection("kanjis")
                 .find({ kun_readings: { $elemMatch: { $in: mainKanjiDetails.kun_readings } } })
                 .toArray();
-            const kunyomiGeneralSearch = kunyomiReadingsSearch.filter(kanji => kanji.kanji !== mainKanjiDetails.kanji);
+            const kunyomiGeneralSearch = kunyomiReadingsSearch
+                .filter(kanji => kanji.kanji !== mainKanjiDetails.kanji)
+                .filter(kanji => !kunyomiGroupMembers.flat().includes(kanji.kanji));
             const kunyomiGeneralSearchMembers = kunyomiGeneralSearch.length > 0 ? kunyomiGeneralSearch.map(kanji => kanji.kanji) : [];
 
-            const lookalikeGroupMembers = mainKanjiDetails.lookalikeGroups.map((group: any) => group.members);
-            const onyomiGroupMembers = mainKanjiDetails.onyomiGroups.map((group: any) => group.members);
-            const kunyomiGroupMembers = mainKanjiDetails.kunyomiGroups.map((group: any) => group.members)
-                .filter((kanji: any) => kanji !== mainKanjiDetails.kanji);
 
             const associatedKanji = Array
                 .from(new Set(lookalikeGroupMembers
