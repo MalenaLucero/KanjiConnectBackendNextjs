@@ -15,7 +15,7 @@ export default async (req: any, res: any) => {
         const lessons = await db
             .collection("lessons")
             .find({ user: req.query.user })
-            .sort({ metacritic: -1 })
+            .sort({ date: "ascending" })
             .toArray();
 
         res.json(lessons);
