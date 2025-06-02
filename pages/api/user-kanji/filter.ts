@@ -1,6 +1,7 @@
 import clientPromise from "../../../lib/mongodb";
 import NextCors from 'nextjs-cors';
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
+import { Expression } from "typescript";
 
 interface Query {
     user: string,
@@ -33,28 +34,26 @@ export default async (req: any, res: any) => {
             if (body.hasOwnProperty('difficulty')) {
                 match.difficulty = { $in: body.difficulty }; 
             }
-            if (body.hasOwnProperty('lesson')) {
-                const expressions = await db.collection('expressions')
-                    .find({ lesson: body.lesson }).toArray();
-                match.expressions = { $in: expressions.map(e => e._id )}
-            }
             if (body.hasOwnProperty('jlpt') && body.jlpt > 0) {
                 const kanjis = await db.collection('kanjis')
                     .find({ jlpt: body.jlpt }).toArray();
                 match.kanji = { $in: kanjis.map(e => e._id )}
             }
-            if (body.hasOwnProperty('tags') && body.tags.length !== 0) {
-                const expressions = await db.collection('expressions')
-                    .find({ tags: {$all: body.tags.map((id: string) => new ObjectId(id)) }}).toArray();
-                match.expressions = { $in: expressions.map(e => e._id )}
-            }
-            if (body.hasOwnProperty('source')) {
-                const expressions = await db.collection('expressions')
-                    .find({ exampleSentences: { $elemMatch: { source: body.source }}}).toArray();
-                match.expressions = { $in: expressions.map(e => e._id )}
+            if (body.hasOwnProperty('lesson') || body.hasOwnProperty('tags') || body.hasOwnProperty('source')) {
+                const findObject: any = {}
+                if (body.hasOwnProperty('lesson')) {
+                    findObject.lesson = body.lesson;
+                }
+                if (body.hasOwnProperty('tags') && body.tags.length !== 0) {
+                    findObject.tags = { $all: body.tags.map((id: string) => new ObjectId(id)) }
+                }
+                if (body.hasOwnProperty('source')) {
+                    findObject.exampleSentences = { $elemMatch: { source: body.source }}
+                }
+                const expressions = await db.collection('expressions').find(findObject).toArray();
+                match.expressions = { $in: expressions.map((e: { _id: any; }) => e._id )}
             }
         }
-
         const userKanjis = await db
                 .collection("userkanjis")
                 .aggregate([
