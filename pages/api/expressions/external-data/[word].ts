@@ -1,5 +1,3 @@
-import NextCors from 'nextjs-cors';
-
 interface Sense {
     english_definitions: string[],
     parts_of_speech: string[],
@@ -33,11 +31,6 @@ const filterEnglishMeaning = (senses: Sense[]) => {
 }
 
 export default async (req: any, res: any) => {
-   await NextCors(req, res, {
-      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-      origin: '*',
-      optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-   });
 
    try {
         const response = await fetch('https://jisho.org/api/v1/search/words?keyword=' + req.query.word)
