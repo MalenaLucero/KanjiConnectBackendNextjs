@@ -85,10 +85,10 @@ export default async (req: any, res: any) => {
                     summary: null,
                     subtitles: subs
                 } 
-                console.log(episode.number)
-                console.log(episode.englishTitle)
-                console.log(episode.subtitles[0])
-                const episodeCreated = await db.collection('episodes').insertOne(episode);
+                // console.log(episode.number)
+                // console.log(episode.englishTitle)
+                // console.log(episode.subtitles[0])
+                // const episodeCreated = await db.collection('episodes').insertOne(episode);
             }
         });
         res.json('ok');
