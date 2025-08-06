@@ -1,5 +1,6 @@
-import clientPromise from "../../../../lib/mongodb";
 import { ObjectId } from "mongodb";
+import clientPromise from "../../../../lib/mongodb";
+import { useSearchParams } from 'next/navigation';
 
 export default async (req: any, res: any) => {
     res.setHeader('Access-Control-Allow-Credentials', 'true')
@@ -14,18 +15,17 @@ export default async (req: any, res: any) => {
         const client = await clientPromise;
         const db = client.db("kanji-connect");
 
-        const { body } = req;
-        const match: any = {};
-
-        if (body?.animeIds) {
-            match.anime = { $in: body.animeIds.map((id: string) => new ObjectId(id))}
-        }
-
-        const projection = {
-            projection: { englishTitle: 1, number: 1, season: 1, anime: 1 }
+        const anime = req.query.anime;
+        const season = req.query.season;
+        const number = req.query.number;
+        
+        const match: any = {
+            anime: new ObjectId(anime),
+            season: parseInt(season),
+            number: parseInt(number)
         };
 
-        const filter = await db.collection('episodes').find(match, projection).toArray();
+        const filter = await db.collection('episodes').findOne(match);
         res.json(filter);
     } catch (e) {
         console.error(e);
